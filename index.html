@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>❄️ PUBG UC Shop | Snow Edition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Snowflakes Canvas */
+        #snowCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-bottom: 100px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header with Snow Effect */
+        .header {
+            text-align: center;
+            padding: 35px 20px;
+            background: linear-gradient(135deg, rgba(102,126,234,0.9), rgba(118,75,162,0.9));
+            border-radius: 40px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '❄️';
+            position: absolute;
+            font-size: 150px;
+            opacity: 0.1;
+            bottom: -30px;
+            right: -30px;
+            transform: rotate(15deg);
+        }
+
+        .header::after {
+            content: '🎮';
+            position: absolute;
+            font-size: 100px;
+            opacity: 0.1;
+            top: -20px;
+            left: -20px;
+            transform: rotate(-15deg);
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            text-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            background: linear-gradient(135deg, #fff, #ffd89b);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .header p {
+            opacity: 0.95;
+            font-size: 0.95em;
+        }
+
+        .snow-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 50px;
+            margin-top: 15px;
+            font-size: 0.8em;
+            backdrop-filter: blur(5px);
+        }
+
+        /* Products Grid */
+        .products {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 18px;
+            margin-bottom: 30px;
+        }
+
+        .product-card {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 20px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255,255,255,0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .product-card:hover::before {
+            left: 100%;
+        }
+
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            border-color: rgba(102,126,234,0.6);
+        }
+
+        .product-icon {
+            font-size: 45px;
+            margin-bottom: 10px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .uc-amount {
+            font-size: 26px;
+            font-weight: 800;
+            margin: 10px 0;
+            background: linear-gradient(135deg, #ffd89b, #c7e9fb);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .price {
+            font-size: 22px;
+            font-weight: bold;
+            color: #4ade80;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .price::before {
+            content: '💰';
+            font-size: 18px;
+        }
+
+        .old-price {
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+            text-decoration: line-through;
+            margin-left: 8px;
+        }
+
+        .buy-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            font-size: 14px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .buy-btn:active {
+            transform: scale(0.95);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(239,68,68,0.4);
+        }
+
+        /* Cart Sidebar */
+        .cart-sidebar {
+            position: fixed;
+            right: -100%;
+            top: 0;
+            width: 100%;
+            max-width: 400px;
+            height: 100vh;
+            background: rgba(15,12,41,0.98);
+            backdrop-filter: blur(20px);
+            box-shadow: -5px 0 40px rgba(0,0,0,0.5);
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 10000;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .cart-sidebar.open {
+            right: 0;
+        }
+
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .close-cart {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 35px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .close-cart:hover {
+            transform: scale(1.1);
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .cart-total {
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.3));
+            border-radius: 20px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .checkout-btn {
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 15px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .checkout-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 20000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.active {
+            display: flex;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-radius: 40px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.2);
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .payment-details {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 25px;
+            margin: 20px 0;
+        }
+
+        .copy-btn {
+            background: #3b82f6;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #2563eb;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4ade80;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            display: none;
+            z-index: 30000;
+            animation: slideUp 0.3s;
+            font-weight: bold;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        /* FAB Buttons */
+        .fab {
+            position: fixed;
+            bottom: 20px;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+            z-index: 1000;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+        }
+
+        .cart-fab {
+            left: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .support-fab {
+            right: 20px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(102,126,234,0.5);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="snowCanvas"></canvas>
+
+    <div class="container">
+        <div class="header">
+            <h1>❄️ PUBG Mobile UC Shop</h1>
+            <p>🎁 Зимняя распродажа | Моментальная выдача</p>
+            <div class="snow-badge">
+                🌨️ Снежная акция! Скидка 10% на первый заказ
+            </div>
+        </div>
+
+        <div class="products" id="products"></div>
+    </div>
+
+    <!-- Cart Sidebar -->
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h2>🛒 Корзина</h2>
+            <button class="close-cart" onclick="closeCart()">×</button>
+        </div>
+        <div class="cart-items" id="cartItems"></div>
+        <div class="cart-total">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <span>💰 Итого:</span>
+                <span id="totalAmount" style="font-size: 28px; font-weight: bold;">0 ₽</span>
+            </div>
+            <button class="checkout-btn" onclick="checkout()">💳 Оформить заказ</button>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div class="modal" id="paymentModal">
+        <div class="modal-content">
+            <h2>❄️ Оплата заказа</h2>
+            <div class="payment-details">
+                <p><strong>💰 Сумма к оплате:</strong> <span id="paymentAmount" style="font-size: 24px; font-weight: bold;">0</span> ₽</p>
+                <hr style="margin: 15px 0; border-color: rgba(255,255,255,0.1);">
+                <p><strong>💳 Карта Т-Банк:</strong></p>
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                    <code style="font-size: 16px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 10px;">2200 7020 3568 7222</code>
+                    <button class="copy-btn" onclick="copyText('2200 7020 3568 7222')">📋 Копировать</button>
+                </div>
+                <p style="margin-top: 15px;"><strong>📱 СБП (по номеру телефона):</strong></p>
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                    <code style="font-size: 16px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 10px;">+7 963 701-31-60</code>
+                    <button class="copy-btn" onclick="copyText('+79637013160')">📋 Копировать</button>
+                </div>
+            </div>
+            <div style="background: rgba(234,179,8,0.15); padding: 15px; border-radius: 20px; margin: 15px 0;">
+                <p>📌 <strong>Важно:</strong></p>
+                <p style="font-size: 14px;">• После оплаты нажмите кнопку ниже</p>
+                <p style="font-size: 14px;">• Сделайте скриншот чека</p>
+                <p style="font-size: 14px;">• Администратор проверит оплату и выдаст UC</p>
+            </div>
+            <button class="checkout-btn" onclick="confirmPayment()" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                ✅ Я оплатил(а)
+            </button>
+            <button onclick="closeModal()" style="width: 100%; padding: 12px; margin-top: 10px; background: rgba(255,255,255,0.1); border: none; border-radius: 50px; color: white; cursor: pointer;">
+                ❌ Отмена
+            </button>
+        </div>
+    </div>
+
+    <!-- FAB Buttons -->
+    <div class="fab cart-fab" onclick="openCart()">
+        🛒
+        <div class="cart-count" id="cartCount">0</div>
+    </div>
+    <div class="fab support-fab" onclick="openSupport()">
+        💬
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ==================== SNOWFLAKES ====================
+        const canvas = document.getElementById('snowCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        let snowflakes = [];
+        const snowflakeCount = 120;
+        
+        function resizeCanvas() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+        
+        function createSnowflake() {
+            return {
+                x: Math.random() * width,
+                y: Math.random() * height,
+                radius: Math.random() * 4 + 2,
+                speed: Math.random() * 1.5 + 0.5,
+                opacity: Math.random() * 0.5 + 0.3,
+                sway: Math.random() * Math.PI * 2,
+                swayAmount: Math.random() * 2 + 1
+            };
+        }
+        
+        function initSnowflakes() {
+            for (let i = 0; i < snowflakeCount; i++) {
+                snowflakes.push(createSnowflake());
+            }
+        }
+        
+        function drawSnowflakes() {
+            ctx.clearRect(0, 0, width, height);
+            for (let flake of snowflakes) {
+                ctx.beginPath();
+                ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${flake.opacity})`;
+                ctx.fill();
+                
+                flake.y += flake.speed;
+                flake.sway += 0.02;
+                flake.x += Math.sin(flake.sway) * 0.3;
+                
+                if (flake.y > height) {
+                    flake.y = -flake.radius;
+                    flake.x = Math.random() * width;
+                }
+                if (flake.x > width) flake.x = 0;
+                if (flake.x < 0) flake.x = width;
+            }
+            requestAnimationFrame(drawSnowflakes);
+        }
+        
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            snowflakes = [];
+            initSnowflakes();
+        });
+        
+        resizeCanvas();
+        initSnowflakes();
+        drawSnowflakes();
+        
+        // ==================== PRODUCTS ====================
+        const products = [
+            { uc: 60, price: 110, popular: false },
+            { uc: 120, price: 220, popular: false },
+            { uc: 180, price: 330, popular: false },
+            { uc: 325, price: 460, popular: true },
+            { uc: 385, price: 570, popular: false },
+            { uc: 660, price: 900, popular: true },
+            { uc: 720, price: 1010, popular: false },
+            { uc: 985, price: 1360, popular: true },
+            { uc: 1800, price: 2155, popular: false },
+            { uc: 3850, price: 4200, popular: true },
+            { uc: 8100, price: 8060, popular: false }
+        ];
+        
+        let cart = [];
+        
+        function renderProducts() {
+            const container = document.getElementById('products');
+            container.innerHTML = products.map(product => `
+                <div class="product-card" onclick="addToCart(${product.uc}, ${product.price})">
+                    <div class="product-icon">💎</div>
+                    <div class="uc-amount">${product.uc} UC</div>
+                    <div class="price">${product.price} ₽</div>
+                    ${product.popular ? '<div class="popular-badge">🔥 ХИТ</div>' : ''}
+                    <button class="buy-btn">В корзину</button>
+                </div>
+            `).join('');
+        }
+        
+        function addToCart(uc, price) {
+            cart.push({ uc, price });
+            updateCartUI();
+            showToast(`✅ ${uc} UC добавлено в корзину`, '#4ade80');
+            
+            // Анимация снежинок при добавлении
+            if (window.Telegram?.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+            }
+        }
+        
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartUI();
+            showToast('🗑️ Товар удален', '#ef4444');
+        }
+        
+        function updateCartUI() {
+            const cartItems = document.getElementById('cartItems');
+            const totalAmount = cart.reduce((sum, item) => sum + item.price, 0);
+            const cartCount = document.getElementById('cartCount');
+            
+            cartCount.textContent = cart.length;
+            
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<div style="text-align: center; padding: 40px;">🛒 Корзина пуста</div>';
+            } else {
+                cartItems.innerHTML = cart.map((item, index) => `
+                    <div class="cart-item">
+                        <div>
+                            <strong>💎 ${item.uc} UC</strong>
+                            <div style="color: #4ade80;">${item.price} ₽</div>
+                        </div>
+                        <button onclick="removeFromCart(${index})" style="background: #ef4444; border: none; color: white; padding: 8px 15px; border-radius: 50px; cursor: pointer;">
+                            Удалить
+                        </button>
+                    </div>
+                `).join('');
+            }
+            
+            document.getElementById('totalAmount').innerHTML = totalAmount + ' ₽';
+        }
+        
+        function openCart() {
+            document.getElementById('cartSidebar').classList.add('open');
+        }
+        
+        function closeCart() {
+            document.getElementById('cartSidebar').classList.remove('open');
+        }
+        
+        function checkout() {
+            if (cart.length === 0) {
+                showToast('❌ Корзина пуста', '#ef4444');
+                return;
+            }
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            document.getElementById('paymentAmount').innerHTML = total;
+            document.getElementById('paymentModal').classList.add('active');
+            closeCart();
+        }
+        
+        function closeModal() {
+            document.getElementById('paymentModal').classList.remove('active');
+        }
+        
+        function confirmPayment() {
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            const orderDetails = cart.map(item => `${item.uc} UC - ${item.price}₽`).join('%0A');
+            
+            // Открываем чат с админом
+            const message = `🛒 НОВЫЙ ЗАКАЗ!%0A%0A📦 Заказ:%0A${orderDetails}%0A%0A💰 Итого: ${total}₽%0A%0A✅ Ожидаю выдачу UC`;
+            window.open(`https://t.me/zvqni?text=${message}`, '_blank');
+            
+            showToast('✅ Спасибо! Администратор свяжется с вами', '#4ade80');
+            closeModal();
+            cart = [];
+            updateCartUI();
+            
+            if (window.Telegram?.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+            }
+        }
+        
+        function copyText(text) {
+            navigator.clipboard.writeText(text);
+            showToast('✅ Скопировано!', '#3b82f6');
+        }
+        
+        function showToast(message, color = '#4ade80') {
+            const toast = document.getElementById('toast');
+            toast.style.backgroundColor = color;
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 2000);
+        }
+        
+        function openSupport() {
+            window.open('https://t.me/zvqni', '_blank');
+        }
+        
+        // Telegram WebApp Init
+        if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.expand();
+            window.Telegram.WebApp.enableClosingConfirmation();
+            document.body.classList.add(window.Telegram.WebApp.colorScheme === 'dark' ? 'telegram-dark' : 'telegram-light');
+        }
+        
+        renderProducts();
+        
+        // Закрытие модалки по клику вне
+        document.getElementById('paymentModal').onclick = (e) => {
+            if (e.target === document.getElementById('paymentModal')) {
+                closeModal();
+            }
+        };
+        
+        // Закрытие корзины по ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeCart();
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
